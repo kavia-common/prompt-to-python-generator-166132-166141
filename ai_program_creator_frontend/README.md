@@ -18,6 +18,23 @@ In the project directory, you can run:
 Runs the app in development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
+### Backend API and Proxy
+
+This frontend expects a backend to serve these endpoints:
+- POST `/api/generate` -> returns JSON `{ code: string, requestId: string }`
+- POST `/api/feedback` -> returns JSON `{ success: boolean }`
+
+During development, Create React App can proxy API requests to a backend running on another port.  
+The `package.json` includes:
+```json
+{
+  "proxy": "http://localhost:5000"
+}
+```
+Make sure your backend is running at `http://localhost:5000`. If it runs elsewhere, update the `proxy` value accordingly, then restart `npm start`.
+
+In production, ensure the frontend is served from the same origin as the backend or that your server (e.g., Nginx) routes `/api/*` to your backend.
+
 ### `npm test`
 
 Launches the test runner in interactive watch mode.
