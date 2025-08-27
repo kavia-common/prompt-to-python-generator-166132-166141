@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import { generateProgram, submitFeedback } from './services/api';
+import { copyToClipboard } from './utils/clipboard';
 
 // Constants
 const PROMPT_MAX = 1000;
@@ -101,6 +102,35 @@ const styles = {
     background: 'var(--bg-primary)',
     color: 'var(--text-primary)',
   },
+  // Copy button container aligned to the right above code block
+  copyRow: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  copyBtnSecondary: {
+    background: 'transparent',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--border-color)',
+    padding: '8px 12px',
+    borderRadius: 8,
+    cursor: 'pointer',
+  },
+  toast: {
+    position: 'fixed',
+    bottom: 20,
+    right: 20,
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--border-color)',
+    padding: '10px 12px',
+    borderRadius: 8,
+    boxShadow: 'var(--shadow-md)',
+    zIndex: 9999,
+    fontSize: 14,
+  },
 };
 
 // PUBLIC_INTERFACE
@@ -132,6 +162,10 @@ function App() {
   const [comment, setComment] = useState('');
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [feedbackSuccess, setFeedbackSuccess] = useState(null); // true | false | null
+
+  // Copy-to-clipboard UX
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
 
   // Derived
   const remaining = useMemo(() => PROMPT_MAX - prompt.length, [prompt]);
@@ -165,6 +199,8 @@ function App() {
 
     setLoading(true);
     setError('');
+    setCopyError('');
+    setCopied(false);
     setCode('');
     setRequestId('');
     setFeedbackSuccess(null);
@@ -177,6 +213,24 @@ function App() {
       setError(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!code) return;
+    try {
+      await copyToClipboard(code);
+      setCopyError('');
+      setCopied(true);
+      // Auto-hide toast after 1.2s
+      window.clearTimeout(handleCopy._t);
+      handleCopy._t = window.setTimeout(() => setCopied(false), 1200);
+    } catch (err) {
+      setCopied(false);
+      setCopyError(err?.message || 'Failed to copy to clipboard.');
+      // Hide error toast after 2s
+      window.clearTimeout(handleCopy._e);
+      handleCopy._e = window.setTimeout(() => setCopyError(''), 2000);
     }
   };
 
@@ -267,6 +321,19 @@ function App() {
           {code && (
             <section style={styles.section} aria-label="Generated code">
               <h2 style={{ marginTop: 0, fontSize: 20 }}>Generated Python Code</h2>
+
+              <div style={styles.copyRow}>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  style={styles.copyBtnSecondary}
+                  aria-label="Copy generated code to clipboard"
+                  title="Copy to clipboard"
+                >
+                  📋 Copy
+                </button>
+              </div>
+
               <div style={styles.codeWrap}>
                 <pre
                   style={{ margin: 0 }}
@@ -345,6 +412,21 @@ function App() {
             </section>
           )}
         </div>
+
+        {(copied || copyError) && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              ...styles.toast,
+              borderColor: copyError ? 'var(--error-border)' : 'var(--success-border)',
+              background: copyError ? 'var(--error-bg)' : 'var(--success-bg)',
+              color: copyError ? 'var(--error)' : 'var(--success)',
+            }}
+          >
+            {copyError ? copyError : 'Copied to clipboard'}
+          </div>
+        )}
       </header>
     </div>
   );
