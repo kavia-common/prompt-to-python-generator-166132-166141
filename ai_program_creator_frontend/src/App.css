@@ -1,104 +1,333 @@
-/* CSS Variables for Theme Management */
+/* Modern Minimalistic Theme with Auto Light/Dark Support and Accessible Controls */
+
+/* Core design tokens */
 :root {
-  /* Light theme colors */
+  /* Brand palette */
+  --accent: #f2b55a; /* requested accent */
+  --text-primary: #000000; /* primary text */
+  --text-secondary: #7d7d7d; /* secondary text */
+
+  /* Surfaces (light default) */
   --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --text-primary: #282c34;
-  --text-secondary: #61dafb;
-  --border-color: #e9ecef;
-  --button-bg: #007bff;
-  --button-text: #ffffff;
+  --bg-secondary: #f6f7f9;
+  --border-color: #e6e8eb;
+
+  /* Controls */
+  --button-bg: var(--accent);
+  --button-text: #1a1a1a; /* ensure strong contrast on accent */
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* Code block */
+  --code-bg: #0f172a0d; /* subtle slate overlay for light */
+  --code-text: #0f172a;
+
+  /* Shadows and radii */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 10px rgba(0,0,0,0.08);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+
+  /* Transitions */
+  --transition-fast: 180ms ease;
+  --transition-med: 260ms ease;
+
+  /* Inline status colors */
+  --success: #198754;
+  --success-bg: #1987541a;
+  --success-border: #19875466;
+
+  --error: #d9534f;
+  --error-bg: #d9534f1a;
+  --error-border: #d9534f66;
 }
 
+/* Dark theme override via data attribute (keeps existing toggle integration working) */
 [data-theme="dark"] {
-  /* Dark theme colors */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #282c34;
-  --text-primary: #ffffff;
-  --text-secondary: #61dafb;
-  --border-color: #404040;
-  --button-bg: #0056b3;
-  --button-text: #ffffff;
+  --bg-primary: #0e0f12;
+  --bg-secondary: #15171c;
+  --text-primary: #f5f6f8;
+  --text-secondary: #b7bcc6;
+  --border-color: #2a2e36;
+
+  --button-bg: var(--accent);
+  --button-text: #1a1a1a; /* accent is light; dark text preserves contrast */
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 50%, transparent);
+
+  --code-bg: #0b0e147a;
+  --code-text: #e6e9ef;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
+  --shadow-md: 0 6px 14px rgba(0,0,0,0.35);
 }
 
+/* Base app container */
 .App {
-  text-align: center;
+  text-align: initial;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--transition-med), color var(--transition-med);
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
+/* Full-height header as main layout container */
 .App-header {
-  background-color: var(--bg-secondary);
+  background: var(--bg-primary);
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease;
+  display: grid;
+  place-items: start center;
+  align-content: start;
+  gap: 16px;
+  padding: clamp(16px, 3vw, 32px);
+  transition: background-color var(--transition-med);
   position: relative;
 }
 
-.App-link {
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
+/* Responsive centered container */
+.container {
+  width: min(960px, 100%);
+  margin-inline: auto;
 }
 
+/* Utility/typography suggestions for the app (non-disruptive) */
+.title { font-weight: 700; letter-spacing: -0.02em; }
+.subtle { color: var(--text-secondary); }
+
+/* Sections/surfaces */
+.section {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: clamp(16px, 2.4vw, 24px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Theme toggle button - preserve existing class name/placement */
 .theme-toggle {
   position: absolute;
   top: 20px;
   right: 20px;
-  background-color: var(--button-bg);
-  color: var(--button-text);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
 .theme-toggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 20%, var(--border-color));
 }
 
-.theme-toggle:active {
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Form controls */
+label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+
+textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  padding: 12px 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+}
+
+textarea::placeholder {
+  color: color-mix(in srgb, var(--text-secondary) 70%, transparent);
+}
+
+textarea:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-color));
+  box-shadow: var(--focus-ring);
+}
+
+/* Buttons */
+button {
+  font: inherit;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), opacity var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  opacity: 0.95;
+}
+
+.btn:active {
   transform: translateY(0);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.btn[aria-disabled="true"],
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Secondary button (neutral outline) */
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 20%, var(--border-color));
+}
+
+/* Inline helper text, counters */
+.helper {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Code display */
+.code-block {
+  overflow: auto;
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Feedback controls (rating + comment) */
+.rating-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.rating-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast);
+}
+
+.rating-btn[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-color));
+  background: var(--button-bg);
+  color: var(--button-text);
+  box-shadow: var(--focus-ring);
+}
+
+.input {
+  min-width: 220px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-color));
+  box-shadow: var(--focus-ring);
+}
+
+/* Inline messages */
+.msg-error {
+  color: var(--error);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+.msg-success {
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* Links (if any) */
+.App-link {
+  color: var(--text-secondary);
+  transition: color var(--transition-fast), opacity var(--transition-fast);
+}
+.App-link:hover { opacity: 0.8; }
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle,
+  .btn,
+  .rating-btn {
+    transition: none;
   }
 }
 
-/* Responsive design for mobile */
+/* Responsive tweaks */
 @media (max-width: 768px) {
   .theme-toggle {
     top: 10px;
     right: 10px;
-    padding: 8px 16px;
+    padding: 8px 12px;
     font-size: 12px;
   }
+}
+
+/* Optional keyframes kept for compatibility if used elsewhere */
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
