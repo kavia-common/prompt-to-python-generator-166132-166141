@@ -1,10 +1,48 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
-import { generateProgram, submitFeedback } from './services/api';
+import { generateProgram, submitFeedback, friendlyError } from './services/api';
 import { copyToClipboard } from './utils/clipboard';
 
 // Constants
 const PROMPT_MAX = 1000;
+
+// Simple Error Boundary to catch render errors and display a fallback UI
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, message: '' };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, message: error?.message || 'Something went wrong.' };
+  }
+  componentDidCatch(error, info) {
+    // Optionally log to an error reporting service
+    if (process && process.env && process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.error('ErrorBoundary caught:', error, info);
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="App">
+          <header className="App-header">
+            <div className="container">
+              <div className="section">
+                <h2>Unexpected error</h2>
+                <p className="msg-error" role="alert" aria-live="assertive">{this.state.message}</p>
+                <button className="btn" onClick={() => this.setState({ hasError: false, message: '' })}>
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </header>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Basic inline styles to complement existing CSS without changing template structure
 const styles = {
@@ -156,6 +194,7 @@ function App() {
   const [code, setCode] = useState('');
   const [requestId, setRequestId] = useState('');
   const [error, setError] = useState('');
+  const [feedbackError, setFeedbackError] = useState('');
 
   // Feedback state
   const [rating, setRating] = useState(null); // 1..5
@@ -199,17 +238,18 @@ function App() {
 
     setLoading(true);
     setError('');
+    setFeedbackError('');
     setCopyError('');
     setCopied(false);
     setCode('');
     setRequestId('');
     setFeedbackSuccess(null);
     try {
-      const res = await generateProgram(prompt.trim());
+      const res = await generateProgram(prompt.trim(), { timeoutMs: 30000 });
       setCode(res.code || '');
       setRequestId(res.requestId || '');
     } catch (err) {
-      const message = err?.message || 'Failed to generate code.';
+      const message = friendlyError(err, 'Failed to generate code.');
       setError(message);
     } finally {
       setLoading(false);
@@ -238,11 +278,13 @@ function App() {
     if (!requestId || rating == null || feedbackSubmitting) return;
     setFeedbackSubmitting(true);
     setFeedbackSuccess(null);
+    setFeedbackError('');
     try {
-      const res = await submitFeedback({ requestId, rating: Number(rating), comment });
+      const res = await submitFeedback({ requestId, rating: Number(rating), comment }, { timeoutMs: 30000 });
       setFeedbackSuccess(!!res?.success);
     } catch (err) {
       setFeedbackSuccess(false);
+      setFeedbackError(friendlyError(err, 'Could not submit feedback.'));
     } finally {
       setFeedbackSubmitting(false);
     }
@@ -252,6 +294,7 @@ function App() {
     setRating(null);
     setComment('');
     setFeedbackSuccess(null);
+    setFeedbackError('');
   };
 
   return (
@@ -351,6 +394,11 @@ function App() {
                   Rate the usefulness of this result and leave an optional comment.
                 </p>
 
+                {feedbackError && (
+                  <div role="alert" aria-live="assertive" style={{ ...styles.error, marginBottom: 8 }}>
+                    {feedbackError}
+                  </div>
+                )}
                 <div style={styles.feedbackRow} role="group" aria-label="Rating">
                   {[1, 2, 3, 4, 5].map((r) => (
                     <button
@@ -433,3 +481,16 @@ function App() {
 }
 
 export default App;
+
+// PUBLIC_INTERFACE
+export function ErrorBoundaryWrapper() {
+  /** Wrap App with an ErrorBoundary so unexpected render errors show a friendly fallback. */
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}
+
+// Attach for convenient import as App.ErrorBoundaryWrapper in index.js if needed
+App.ErrorBoundaryWrapper = ErrorBoundaryWrapper;
